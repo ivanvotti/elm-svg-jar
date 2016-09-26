@@ -1,0 +1,9 @@
+# compiled output
+/app.js
+/app.css
+/vendor.css
+
+# dependencies
+/node_modules
+/bower_components
+/elm-stuff
