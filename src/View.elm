@@ -1,9 +1,29 @@
 module View exposing (view)
 
 import Html
-import Html exposing (Html, div, input, text, span, code)
+    exposing
+        ( Html
+        , div
+        , input
+        , text
+        , span
+        , code
+        , button
+        , table
+        , tbody
+        , kbd
+        , tr
+        , td
+        )
 import Html.Events exposing (onClick, onInput)
-import Html.Attributes exposing (attribute, placeholder, class, classList, value)
+import Html.Attributes
+    exposing
+        ( attribute
+        , placeholder
+        , class
+        , classList
+        , value
+        )
 import String
 import InlineSvg exposing (inlineSvg, makeSvg)
 import Model exposing (..)
@@ -13,13 +33,14 @@ import Update exposing (..)
 view : Model -> Html Msg
 view model =
     div [ class "c-app-container" ]
-        [ viewSidebar model
+        [ viewSidebar model.assetFilter model.store.filters
         , div [ class "c-app-main" ]
             [ viewContentHeader model.searchQuery
             , div [ class "c-content" ]
                 [ viewAssetList model ]
             ]
         , viewPane model.currentAsset
+        , viewShortcutsBar model.isShortcutBarOpen
         ]
 
 
@@ -50,17 +71,20 @@ viewContentHeader searchQuery =
         ]
 
 
-viewSidebar : Model -> Html Msg
-viewSidebar model =
+viewSidebar : Maybe AssetFilter -> List Filter -> Html Msg
+viewSidebar maybeCurrentFilter allFilters =
     div [ class "c-app-sidebar" ]
         [ div [ class "c-app-sidebar__logo" ]
-            [ div [ class "c-dropdown__trigger" ]
+            [ div
+                [ class "c-dropdown__trigger"
+                , onClick ToggleShortcutBar
+                ]
                 [ inlineSvg "logo" []
                 , inlineSvg "arrow-down"
                     [ attribute "class" "c-icon c-icon--16px c-dropdown__trigger-arrow" ]
                 ]
             ]
-        , viewSidebarFilters model.assetFilter model.store.filters
+        , viewSidebarFilters maybeCurrentFilter allFilters
         ]
 
 
@@ -254,6 +278,76 @@ viewPaneDetails asset =
     in
         div [ class "c-asset-details" ]
             (List.map toDetailsItem details)
+
+
+viewShortcutsBar : Bool -> Html Msg
+viewShortcutsBar isOpen =
+    div
+        [ classList
+            [ "c-drawer" => True
+            , "is-open" => isOpen
+            ]
+        ]
+        [ div [ class "c-drawer__body" ]
+            [ div [ class "c-drawer__title" ]
+                [ text "Keyboard shortcuts  " ]
+            , button
+                [ class "c-drawer__close"
+                , onClick ToggleShortcutBar
+                ]
+                [ text "×" ]
+            , div [ class "c-shortcut-bar" ]
+                [ table [ class "c-shortcut-bar__section" ]
+                    [ tbody []
+                        [ tr []
+                            [ td [ class "c-shortcut-bar__keys" ]
+                                [ kbd [ class "c-shortcut-bar__key" ]
+                                    [ text "Enter" ]
+                                ]
+                            , td [ class "c-shortcut-bar__info" ]
+                                [ text "Copy copypasta to clipboard" ]
+                            ]
+                        , tr []
+                            [ td [ class "c-shortcut-bar__keys" ]
+                                [ kbd [ class "c-shortcut-bar__key" ]
+                                    [ text "D" ]
+                                ]
+                            , td [ class "c-shortcut-bar__info" ]
+                                [ text "Download original asset" ]
+                            ]
+                        , tr []
+                            [ td [ class "c-shortcut-bar__keys" ]
+                                [ kbd [ class "c-shortcut-bar__key" ]
+                                    [ text "S" ]
+                                ]
+                            , td [ class "c-shortcut-bar__info" ]
+                                [ text "Copy optimized code to clipboard" ]
+                            ]
+                        ]
+                    ]
+                , table [ class "c-shortcut-bar__section" ]
+                    [ tbody []
+                        [ tr []
+                            [ td [ class "c-shortcut-bar__keys" ]
+                                [ kbd [ class "c-shortcut-bar__key" ]
+                                    [ text "/" ]
+                                ]
+                            , td [ class "c-shortcut-bar__info" ]
+                                [ text "Focus search bar          " ]
+                            ]
+                        , tr []
+                            [ td [ class "c-shortcut-bar__keys" ]
+                                [ kbd [ class "c-shortcut-bar__key" ]
+                                    [ text "?" ]
+                                ]
+                            , td [ class "c-shortcut-bar__info" ]
+                                [ text "Show shortcuts          " ]
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ]
 
 
 {-| Convenience for making tuples in classList.

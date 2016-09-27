@@ -12,6 +12,7 @@ type Msg
     | SetSearchQuery String
     | SetAssetFilter ( String, String )
     | ClearAssetFilter
+    | ToggleShortcutBar
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -51,6 +52,9 @@ update msg model =
 
         ClearAssetFilter ->
             { model | assetFilter = Nothing } ! []
+
+        ToggleShortcutBar ->
+            { model | isShortcutBarOpen = not model.isShortcutBarOpen } ! []
 
 
 loadStore : Cmd Msg
