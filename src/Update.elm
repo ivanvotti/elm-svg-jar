@@ -6,7 +6,8 @@ import Model exposing (..)
 
 
 type Msg
-    = StoreLoaded Store
+    = NoOp
+    | StoreLoaded Store
     | StoreFaild Http.Error
     | SetCurrentAsset Asset
     | SetSearchQuery String
@@ -18,6 +19,9 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        NoOp ->
+            model ! []
+
         StoreFaild error ->
             model ! []
 

@@ -51,7 +51,7 @@ viewContentHeader searchQuery =
             [ div [ class "c-search-bar" ]
                 [ inlineSvg "search" [ attribute "class" "c-search-bar__icon" ]
                 , input
-                    [ class "c-search-bar__input"
+                    [ class "c-search-bar__input js-search-bar-input"
                     , placeholder "Search assets..."
                     , onInput SetSearchQuery
                     , value searchQuery
