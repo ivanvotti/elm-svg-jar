@@ -230,7 +230,7 @@ viewPane maybeCurrentAsset =
                 , div [ class "c-app-pane__section" ]
                     [ div
                         [ class "c-btn c-btn--tertiary c-btn--full"
-                        , onClick (DownloadAsset currentAsset)
+                        , onClick DownloadCurrentAsset
                         ]
                         [ text "Download" ]
                     ]

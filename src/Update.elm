@@ -1,9 +1,13 @@
 module Update exposing (Msg(..), update, loadStore)
 
 import Task
+import Task
+import Keyboard
 import Http
-import Model exposing (..)
+import DomUtils
 import Ports
+import Key
+import Model exposing (..)
 
 
 type Msg
@@ -15,7 +19,8 @@ type Msg
     | SetAssetFilter ( String, String )
     | ClearAssetFilter
     | ToggleShortcutBar
-    | DownloadAsset Asset
+    | DownloadCurrentAsset
+    | KeyPress Keyboard.KeyCode
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -47,18 +52,80 @@ update msg model =
             { model | assetFilter = Nothing } ! []
 
         ToggleShortcutBar ->
-            { model | isShortcutBarOpen = not model.isShortcutBarOpen } ! []
+            toggleShortcutBar model
 
-        DownloadAsset asset ->
-            let
-                saveFile =
+        DownloadCurrentAsset ->
+            downloadCurrentAsset model
+
+        KeyPress keyCode ->
+            handleShortcut model keyCode
+
+
+handleShortcut : Model -> Keyboard.KeyCode -> ( Model, Cmd Msg )
+handleShortcut model keyCode =
+    case Key.fromCode keyCode of
+        Key.ShiftSlash ->
+            toggleShortcutBar model
+
+        Key.Slash ->
+            focusSearchBar model
+
+        Key.KeyD ->
+            downloadCurrentAsset model
+
+        Key.Enter ->
+            copyCurrentCopypasta model
+
+        Key.Other ->
+            model ! []
+
+
+focusSearchBar : Model -> ( Model, Cmd Msg )
+focusSearchBar model =
+    let
+        command =
+            DomUtils.focusSelector ".js-search-bar-input"
+                |> Task.perform (\_ -> NoOp) (\_ -> NoOp)
+    in
+        model ! [ command ]
+
+
+copyCurrentCopypasta : Model -> ( Model, Cmd Msg )
+copyCurrentCopypasta model =
+    let
+        command =
+            case model.currentAsset of
+                Nothing ->
+                    Cmd.none
+
+                Just asset ->
+                    DomUtils.copyToClipboard asset.copypasta
+                        |> Task.perform (\_ -> NoOp) (\_ -> NoOp)
+    in
+        model ! [ command ]
+
+
+toggleShortcutBar : Model -> ( Model, Cmd Msg )
+toggleShortcutBar model =
+    { model | isShortcutBarOpen = not model.isShortcutBarOpen } ! []
+
+
+downloadCurrentAsset : Model -> ( Model, Cmd Msg )
+downloadCurrentAsset model =
+    let
+        command =
+            case model.currentAsset of
+                Nothing ->
+                    Cmd.none
+
+                Just asset ->
                     Ports.saveFile
                         { content = asset.originalSvg
                         , name = asset.fileName
                         , mimeType = "image/svg+xml"
                         }
-            in
-                model ! [ saveFile ]
+    in
+        model ! [ command ]
 
 
 makeAssetFilter : String -> String -> AssetFilter
