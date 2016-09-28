@@ -36,25 +36,12 @@ update msg model =
         SetSearchQuery searchQuery ->
             { model | searchQuery = searchQuery } ! []
 
-        SetAssetFilter ( key, value ) ->
+        SetAssetFilter ( filterKey, filterValue ) ->
             let
-                getter =
-                    case key of
-                        "fileDir" ->
-                            .fileDir
-
-                        "baseSize" ->
-                            .baseSize
-
-                        _ ->
-                            (\_ -> "")
-
-                assetFilter =
-                    { value = value
-                    , isIncluded = (getter >> ((==) value))
-                    }
+                newFilter =
+                    makeAssetFilter filterKey filterValue
             in
-                { model | assetFilter = Just assetFilter } ! []
+                { model | assetFilter = Just newFilter } ! []
 
         ClearAssetFilter ->
             { model | assetFilter = Nothing } ! []
@@ -71,7 +58,26 @@ update msg model =
                         , mimeType = "image/svg+xml"
                         }
             in
-                ( model, saveFile )
+                model ! [ saveFile ]
+
+
+makeAssetFilter : String -> String -> AssetFilter
+makeAssetFilter filterKey filterValue =
+    let
+        getter =
+            case filterKey of
+                "fileDir" ->
+                    .fileDir
+
+                "baseSize" ->
+                    .baseSize
+
+                _ ->
+                    (\_ -> "")
+    in
+        { value = filterValue
+        , isIncluded = (getter >> ((==) filterValue))
+        }
 
 
 loadStore : Cmd Msg
