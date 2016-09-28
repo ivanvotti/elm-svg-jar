@@ -1,0 +1,6 @@
+{
+  "name": "svg-jar",
+  "dependencies": {
+    "file-saver": "^1.3.2"
+  }
+}

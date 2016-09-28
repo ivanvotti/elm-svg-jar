@@ -3,6 +3,7 @@ module Update exposing (Msg(..), update, loadStore)
 import Task
 import Http
 import Model exposing (..)
+import Ports
 
 
 type Msg
@@ -14,6 +15,7 @@ type Msg
     | SetAssetFilter ( String, String )
     | ClearAssetFilter
     | ToggleShortcutBar
+    | DownloadAsset Asset
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -59,6 +61,17 @@ update msg model =
 
         ToggleShortcutBar ->
             { model | isShortcutBarOpen = not model.isShortcutBarOpen } ! []
+
+        DownloadAsset asset ->
+            let
+                saveFile =
+                    Ports.saveFile
+                        { content = asset.originalSvg
+                        , name = asset.fileName
+                        , mimeType = "image/svg+xml"
+                        }
+            in
+                ( model, saveFile )
 
 
 loadStore : Cmd Msg

@@ -12,6 +12,18 @@
 
   <body>
     <script src="/app.js"></script>
-    <script>Elm.Main.fullscreen()</script>
+    <script src="/bower_components/file-saver/FileSaver.js"></script>
+    <script>
+      (function() {
+        var app = Elm.Main.fullscreen();
+
+        app.ports.saveFile.subscribe(function(file) {
+          window.saveAs(
+            new Blob([file.content], { type: file.mimeType }),
+            file.name
+          );
+        });
+      })();
+    </script>
   </body>
 </html>
