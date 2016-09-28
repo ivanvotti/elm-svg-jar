@@ -21,6 +21,7 @@ type Msg
     | ToggleShortcutBar
     | DownloadCurrentAsset
     | KeyPress Keyboard.KeyCode
+    | ToggleIsInputInFocus
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -57,8 +58,17 @@ update msg model =
         DownloadCurrentAsset ->
             downloadCurrentAsset model
 
+        ToggleIsInputInFocus ->
+            { model | isSearchInputInFocus = not model.isSearchInputInFocus }
+                ! []
+
         KeyPress keyCode ->
-            handleShortcut model keyCode
+            case model.isSearchInputInFocus of
+                True ->
+                    model ! []
+
+                False ->
+                    handleShortcut model keyCode
 
 
 handleShortcut : Model -> Keyboard.KeyCode -> ( Model, Cmd Msg )

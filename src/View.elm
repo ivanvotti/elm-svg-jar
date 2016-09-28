@@ -15,7 +15,7 @@ import Html
         , tr
         , td
         )
-import Html.Events exposing (onClick, onInput)
+import Html.Events exposing (onClick, onInput, onFocus, onBlur)
 import Html.Attributes
     exposing
         ( attribute
@@ -53,8 +53,10 @@ viewContentHeader searchQuery =
                 , input
                     [ class "c-search-bar__input js-search-bar-input"
                     , placeholder "Search assets..."
-                    , onInput SetSearchQuery
                     , value searchQuery
+                    , onInput SetSearchQuery
+                    , onFocus ToggleIsInputInFocus
+                    , onBlur ToggleIsInputInFocus
                     ]
                     []
                 ]

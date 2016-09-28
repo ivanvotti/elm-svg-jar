@@ -19,6 +19,7 @@ type alias Model =
     , searchQuery : String
     , assetFilter : Maybe AssetFilter
     , isShortcutBarOpen : Bool
+    , isSearchInputInFocus : Bool
     }
 
 
@@ -29,6 +30,7 @@ initModel =
     , assetFilter = Nothing
     , store = emptyStore
     , isShortcutBarOpen = False
+    , isSearchInputInFocus = False
     }
 
 
