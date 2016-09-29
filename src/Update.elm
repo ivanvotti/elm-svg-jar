@@ -136,7 +136,7 @@ focusSearchBar model =
     let
         command =
             DomUtils.focusSelector ".js-search-bar-input"
-                |> Task.perform (\_ -> NoOp) (\_ -> NoOp)
+                |> Task.perform alwaysNoOp alwaysNoOp
     in
         model ! [ command ]
 
@@ -151,7 +151,7 @@ copyCurrentCopypasta model =
 
                 Just asset ->
                     DomUtils.copyToClipboard asset.copypasta
-                        |> Task.perform (\_ -> NoOp) (\_ -> NoOp)
+                        |> Task.perform alwaysNoOp alwaysNoOp
     in
         model ! [ command ]
 
@@ -203,3 +203,8 @@ loadStore =
     "/store.json"
         |> Http.get decodeStore
         |> Task.perform StoreFaild StoreLoaded
+
+
+alwaysNoOp : a -> Msg
+alwaysNoOp =
+    always NoOp
