@@ -24,7 +24,6 @@ import Html.Attributes
         , classList
         , value
         )
-import String
 import InlineSvg exposing (inlineSvg, makeSvg)
 import Model exposing (..)
 import Update exposing (..)
@@ -37,7 +36,7 @@ view model =
         , div [ class "c-app-main" ]
             [ viewContentHeader model.searchQuery
             , div [ class "c-content" ]
-                [ viewAssetList model ]
+                [ viewAssetList model.currentAsset model.filteredAssets ]
             ]
         , viewPane model.currentAsset
         , viewShortcutsBar model.isShortcutBarOpen
@@ -148,39 +147,10 @@ viewSidebarFilter maybeCurrentFilter filterData =
         div [ class "c-sidebar-filter" ] (filterTitle :: filterItems)
 
 
-containsQuery : String -> List (Asset -> String) -> Asset -> Bool
-containsQuery query getters asset =
-    let
-        lowedQuery =
-            String.toLower query
-
-        lowedValues =
-            List.map (\get -> get asset |> String.toLower) getters
-    in
-        List.any (String.contains lowedQuery) lowedValues
-
-
-viewAssetList : Model -> Html Msg
-viewAssetList model =
-    let
-        filteredAssets =
-            case model.assetFilter of
-                Nothing ->
-                    model.store.assets
-
-                Just assetFilter ->
-                    List.filter assetFilter.isIncluded model.store.assets
-
-        foundAssets =
-            if model.searchQuery /= "" then
-                List.filter
-                    (containsQuery model.searchQuery [ .fileName, .fileDir ])
-                    filteredAssets
-            else
-                filteredAssets
-    in
-        div [ class "c-asset-list" ]
-            (List.map (viewAsset model.currentAsset) foundAssets)
+viewAssetList : Maybe Asset -> List Asset -> Html Msg
+viewAssetList maybeCurrentAsset filteredAssets =
+    div [ class "c-asset-list" ]
+        (List.map (viewAsset maybeCurrentAsset) filteredAssets)
 
 
 viewAsset : Maybe Asset -> Asset -> Html Msg

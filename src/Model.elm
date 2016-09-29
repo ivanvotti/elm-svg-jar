@@ -16,6 +16,7 @@ import Json.Decode.Pipeline as DP
 type alias Model =
     { store : Store
     , currentAsset : Maybe Asset
+    , filteredAssets : List Asset
     , searchQuery : String
     , assetFilter : Maybe AssetFilter
     , isShortcutBarOpen : Bool
@@ -25,10 +26,11 @@ type alias Model =
 
 initModel : Model
 initModel =
-    { currentAsset = Nothing
+    { store = emptyStore
+    , currentAsset = Nothing
+    , filteredAssets = []
     , searchQuery = ""
     , assetFilter = Nothing
-    , store = emptyStore
     , isShortcutBarOpen = False
     , isSearchInputInFocus = False
     }

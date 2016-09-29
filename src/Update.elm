@@ -1,5 +1,6 @@
 module Update exposing (Msg(..), update, loadStore)
 
+import String
 import Task
 import Task
 import Keyboard
@@ -34,23 +35,23 @@ update msg model =
             model ! []
 
         StoreLoaded store ->
-            { model | store = store } ! []
-
-        SetCurrentAsset asset ->
-            { model | currentAsset = Just asset } ! []
+            updateFilteredAssets { model | store = store }
 
         SetSearchQuery searchQuery ->
-            { model | searchQuery = searchQuery } ! []
+            updateFilteredAssets { model | searchQuery = searchQuery }
 
         SetAssetFilter ( filterKey, filterValue ) ->
             let
                 newFilter =
                     makeAssetFilter filterKey filterValue
             in
-                { model | assetFilter = Just newFilter } ! []
+                updateFilteredAssets { model | assetFilter = Just newFilter }
 
         ClearAssetFilter ->
-            { model | assetFilter = Nothing } ! []
+            updateFilteredAssets { model | assetFilter = Nothing }
+
+        SetCurrentAsset asset ->
+            { model | currentAsset = Just asset } ! []
 
         ToggleShortcutBar ->
             toggleShortcutBar model
@@ -69,6 +70,46 @@ update msg model =
 
                 False ->
                     handleShortcut model keyCode
+
+
+containsQuery : String -> List (Asset -> String) -> Asset -> Bool
+containsQuery query getters asset =
+    let
+        lowedQuery =
+            String.toLower query
+
+        lowedValues =
+            List.map (\get -> get asset |> String.toLower) getters
+    in
+        List.any (String.contains lowedQuery) lowedValues
+
+
+updateFilteredAssets : Model -> ( Model, Cmd Msg )
+updateFilteredAssets model =
+    let
+        allAssets =
+            model.store.assets
+
+        afterFilter =
+            case model.assetFilter of
+                Nothing ->
+                    allAssets
+
+                Just assetFilter ->
+                    List.filter assetFilter.isIncluded allAssets
+
+        afterSearch =
+            if model.searchQuery /= "" then
+                List.filter
+                    (containsQuery model.searchQuery [ .fileName, .fileDir ])
+                    afterFilter
+            else
+                afterFilter
+
+        filteredAssets =
+            afterSearch
+    in
+        { model | filteredAssets = filteredAssets } ! []
 
 
 handleShortcut : Model -> Keyboard.KeyCode -> ( Model, Cmd Msg )
