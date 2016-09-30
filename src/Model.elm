@@ -11,6 +11,7 @@ module Model
 
 import Json.Decode as D
 import Json.Decode.Pipeline as DP
+import Hop.Types
 
 
 type alias Model =
@@ -21,6 +22,7 @@ type alias Model =
     , assetFilter : Maybe AssetFilter
     , isShortcutBarOpen : Bool
     , isSearchInputInFocus : Bool
+    , routerAddress : Hop.Types.Address
     }
 
 
@@ -33,6 +35,7 @@ initModel =
     , assetFilter = Nothing
     , isShortcutBarOpen = False
     , isSearchInputInFocus = False
+    , routerAddress = Hop.Types.newAddress
     }
 
 

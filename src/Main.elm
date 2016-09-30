@@ -1,20 +1,27 @@
 module Main exposing (..)
 
-import Html.App as App
+import Navigation
 import Keyboard
 import Model exposing (Model, initModel)
-import Update exposing (Msg(..), update, loadStore)
+import Update exposing (Msg(..), update, urlUpdate, loadStore)
 import View exposing (view)
+import Router
 
 
 main : Program Never
 main =
-    App.program
-        { init = initModel ! [ loadStore ]
+    Navigation.program Router.urlParser
+        { init = init
         , update = update
         , view = view
+        , urlUpdate = urlUpdate
         , subscriptions = subscriptions
         }
+
+
+init : ( String, Router.Address ) -> ( Model, Cmd Msg )
+init ( _, routerAddress ) =
+    Router.updateModel routerAddress initModel ! [ loadStore ]
 
 
 subscriptions : Model -> Sub Msg

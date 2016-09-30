@@ -1,20 +1,22 @@
-module Update exposing (Msg(..), update, loadStore)
+module Update exposing (Msg(..), update, urlUpdate, loadStore)
 
 import String
 import Task
 import Task
+import Dict
 import Keyboard
 import Http
 import DomUtils
 import Ports
 import Key
 import Model exposing (..)
+import Router
 
 
 type Msg
     = NoOp
-    | StoreLoaded Store
-    | StoreFaild Http.Error
+    | FetchStoreDone Store
+    | FetchStoreFail Http.Error
     | SetCurrentAsset Asset
     | SetSearchQuery String
     | SetAssetFilter ( String, String )
@@ -31,14 +33,20 @@ update msg model =
         NoOp ->
             model ! []
 
-        StoreFaild error ->
+        FetchStoreFail error ->
             model ! []
 
-        StoreLoaded store ->
+        FetchStoreDone store ->
             updateFilteredAssets { model | store = store }
+                ! []
 
         SetSearchQuery searchQuery ->
-            updateFilteredAssets { model | searchQuery = searchQuery }
+            let
+                command =
+                    Router.updateQueryParams (Dict.singleton "q" searchQuery)
+                        model
+            in
+                model ! [ command ]
 
         SetAssetFilter ( filterKey, filterValue ) ->
             let
@@ -46,9 +54,11 @@ update msg model =
                     makeAssetFilter filterKey filterValue
             in
                 updateFilteredAssets { model | assetFilter = Just newFilter }
+                    ! []
 
         ClearAssetFilter ->
             updateFilteredAssets { model | assetFilter = Nothing }
+                ! []
 
         SetCurrentAsset asset ->
             { model | currentAsset = Just asset } ! []
@@ -72,6 +82,17 @@ update msg model =
                     handleShortcut model keyCode
 
 
+urlUpdate : ( String, Router.Address ) -> Model -> ( Model, Cmd Msg )
+urlUpdate ( _, routerAddress ) model =
+    let
+        newModel =
+            model
+                |> Router.updateModel routerAddress
+                |> updateFilteredAssets
+    in
+        newModel ! []
+
+
 containsQuery : String -> List (Asset -> String) -> Asset -> Bool
 containsQuery query getters asset =
     let
@@ -84,7 +105,7 @@ containsQuery query getters asset =
         List.any (String.contains lowedQuery) lowedValues
 
 
-updateFilteredAssets : Model -> ( Model, Cmd Msg )
+updateFilteredAssets : Model -> Model
 updateFilteredAssets model =
     let
         allAssets =
@@ -109,7 +130,7 @@ updateFilteredAssets model =
         filteredAssets =
             afterSearch
     in
-        { model | filteredAssets = filteredAssets } ! []
+        { model | filteredAssets = filteredAssets }
 
 
 handleShortcut : Model -> Keyboard.KeyCode -> ( Model, Cmd Msg )
@@ -202,7 +223,7 @@ loadStore : Cmd Msg
 loadStore =
     "/store.json"
         |> Http.get decodeStore
-        |> Task.perform StoreFaild StoreLoaded
+        |> Task.perform FetchStoreFail FetchStoreDone
 
 
 alwaysNoOp : a -> Msg
