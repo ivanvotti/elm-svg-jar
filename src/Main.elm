@@ -1,27 +1,23 @@
 module Main exposing (..)
 
-import Navigation
 import Keyboard
-import Model exposing (Model, initModel)
-import Update exposing (Msg(..), update, urlUpdate, loadStore)
-import View exposing (view)
+import RouteUrl
 import Router
+import Model exposing (Model, initModel)
+import Update exposing (Msg(..), update, loadStore)
+import View exposing (view)
 
 
 main : Program Never
 main =
-    Navigation.program Router.urlParser
-        { init = init
+    RouteUrl.program
+        { init = initModel ! [ loadStore ]
         , update = update
         , view = view
-        , urlUpdate = urlUpdate
+        , delta2url = Router.delta2hash
+        , location2messages = Router.hash2messages
         , subscriptions = subscriptions
         }
-
-
-init : ( String, Router.Address ) -> ( Model, Cmd Msg )
-init ( _, routerAddress ) =
-    Router.updateModel routerAddress initModel ! [ loadStore ]
 
 
 subscriptions : Model -> Sub Msg

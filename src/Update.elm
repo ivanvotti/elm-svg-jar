@@ -1,16 +1,14 @@
-module Update exposing (Msg(..), update, urlUpdate, loadStore)
+module Update exposing (Msg(..), update, loadStore)
 
 import String
 import Task
 import Task
-import Dict
 import Keyboard
 import Http
 import DomUtils
 import Ports
 import Key
 import Model exposing (..)
-import Router
 
 
 type Msg
@@ -41,20 +39,12 @@ update msg model =
                 ! []
 
         SetSearchQuery searchQuery ->
-            let
-                command =
-                    Router.updateQueryParams (Dict.singleton "q" searchQuery)
-                        model
-            in
-                model ! [ command ]
+            updateFilteredAssets { model | searchQuery = searchQuery }
+                ! []
 
-        SetAssetFilter ( filterKey, filterValue ) ->
-            let
-                newFilter =
-                    makeAssetFilter filterKey filterValue
-            in
-                updateFilteredAssets { model | assetFilter = Just newFilter }
-                    ! []
+        SetAssetFilter assetFilter ->
+            updateFilteredAssets { model | assetFilter = Just assetFilter }
+                ! []
 
         ClearAssetFilter ->
             updateFilteredAssets { model | assetFilter = Nothing }
@@ -82,17 +72,6 @@ update msg model =
                     handleShortcut model keyCode
 
 
-urlUpdate : ( String, Router.Address ) -> Model -> ( Model, Cmd Msg )
-urlUpdate ( _, routerAddress ) model =
-    let
-        newModel =
-            model
-                |> Router.updateModel routerAddress
-                |> updateFilteredAssets
-    in
-        newModel ! []
-
-
 containsQuery : String -> List (Asset -> String) -> Asset -> Bool
 containsQuery query getters asset =
     let
@@ -116,8 +95,9 @@ updateFilteredAssets model =
                 Nothing ->
                     allAssets
 
-                Just assetFilter ->
-                    List.filter assetFilter.isIncluded allAssets
+                Just currentFilter ->
+                    allAssets
+                        |> List.filter (makeAssetFilter currentFilter)
 
         afterSearch =
             if model.searchQuery /= "" then
@@ -200,8 +180,8 @@ downloadCurrentAsset model =
         model ! [ command ]
 
 
-makeAssetFilter : String -> String -> AssetFilter
-makeAssetFilter filterKey filterValue =
+makeAssetFilter : AssetFilter -> Asset -> Bool
+makeAssetFilter ( filterKey, filterValue ) =
     let
         getter =
             case filterKey of
@@ -214,9 +194,7 @@ makeAssetFilter filterKey filterValue =
                 _ ->
                     (\_ -> "")
     in
-        { value = filterValue
-        , isIncluded = (getter >> ((==) filterValue))
-        }
+        (getter >> ((==) filterValue))
 
 
 loadStore : Cmd Msg

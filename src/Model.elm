@@ -11,7 +11,6 @@ module Model
 
 import Json.Decode as D
 import Json.Decode.Pipeline as DP
-import Hop.Types
 
 
 type alias Model =
@@ -19,10 +18,9 @@ type alias Model =
     , currentAsset : Maybe Asset
     , filteredAssets : List Asset
     , searchQuery : String
-    , assetFilter : Maybe AssetFilter
+    , assetFilter : Maybe ( String, String )
     , isShortcutBarOpen : Bool
     , isSearchInputInFocus : Bool
-    , routerAddress : Hop.Types.Address
     }
 
 
@@ -35,7 +33,6 @@ initModel =
     , assetFilter = Nothing
     , isShortcutBarOpen = False
     , isSearchInputInFocus = False
-    , routerAddress = Hop.Types.newAddress
     }
 
 
@@ -45,9 +42,7 @@ emptyStore =
 
 
 type alias AssetFilter =
-    { value : String
-    , isIncluded : Asset -> Bool
-    }
+    ( String, String )
 
 
 type alias Store =

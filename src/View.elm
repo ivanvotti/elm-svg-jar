@@ -120,8 +120,8 @@ viewSidebarFilter maybeCurrentFilter filterData =
                 Nothing ->
                     \_ -> False
 
-                Just currentFilter ->
-                    \filterItem -> filterItem.name == currentFilter.value
+                Just ( _, currentFilterValue ) ->
+                    \filterItem -> filterItem.name == currentFilterValue
 
         filterTitle =
             div [ class "c-sidebar-filter__title" ]

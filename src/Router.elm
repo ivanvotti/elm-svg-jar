@@ -1,63 +1,84 @@
-module Router exposing (Address, urlParser, updateModel, updateQueryParams)
+module Router exposing (delta2hash, hash2messages)
 
-import Dict exposing (Dict)
-import Navigation
-import Hop
-import Hop.Types
-import Model exposing (Model)
-
-
-hopConfig : Hop.Types.Config
-hopConfig =
-    { hash = True
-    , basePath = ""
-    }
+import String
+import Navigation exposing (Location)
+import RouteUrl exposing (UrlChange)
+import RouteUrl.Builder as Builder exposing (Builder)
+import Update exposing (Msg(..))
+import Model exposing (Model, AssetFilter)
 
 
-type alias Address =
-    Hop.Types.Address
+type alias QueryDeserializer =
+    ( String, String -> Msg )
 
 
-urlParser : Navigation.Parser ( String, Address )
-urlParser =
+type alias QuerySerializer =
+    ( String, Model -> String )
+
+
+hash2messages : Location -> List Msg
+hash2messages location =
     let
-        resolver =
-            Hop.makeResolver hopConfig identity
+        builder =
+            Builder.fromHash location.href
     in
-        Navigation.makeParser (.href >> resolver)
+        queryDeserializers
+            |> List.map (applyDeserializer builder)
+            |> List.filter (\msg -> msg /= NoOp)
 
 
-updateModel : Address -> Model -> Model
-updateModel routerAddress model =
-    { model | routerAddress = routerAddress }
-        |> applyQueryParamsToModel
+delta2hash : Model -> Model -> Maybe UrlChange
+delta2hash previous current =
+    querySerializers
+        |> List.foldl (applySerializer current) Builder.builder
+        |> Builder.toHashChange
+        |> Just
 
 
-updateQueryParams : Dict String String -> Model -> Cmd msg
-updateQueryParams queryParams model =
-    model.routerAddress
-        |> Hop.setQuery queryParams
-        |> Hop.output hopConfig
-        |> Navigation.newUrl
-
-
-qeryParamMappers : Dict String (Model -> String -> Model)
-qeryParamMappers =
-    Dict.fromList
-        [ ( "q", \model value -> { model | searchQuery = value } )
-        ]
-
-
-queryParamToModel : String -> String -> Model -> Model
-queryParamToModel paramName paramValue model =
-    case Dict.get paramName qeryParamMappers of
+applyDeserializer : Builder -> QueryDeserializer -> Msg
+applyDeserializer builder ( queryName, msgGen ) =
+    case Builder.getQuery queryName builder of
         Nothing ->
-            model
+            NoOp
 
-        Just applyParamToModel ->
-            applyParamToModel model paramValue
+        Just queryValue ->
+            msgGen queryValue
 
 
-applyQueryParamsToModel : Model -> Model
-applyQueryParamsToModel model =
-    Dict.foldl queryParamToModel model model.routerAddress.query
+queryDeserializers : List QueryDeserializer
+queryDeserializers =
+    [ ( "q", SetSearchQuery )
+    , ( "filterBy", deserializeAssetFilter )
+    ]
+
+
+deserializeAssetFilter : String -> Msg
+deserializeAssetFilter filterQuery =
+    case String.split ":" filterQuery of
+        [ filterName, filterValue ] ->
+            SetAssetFilter ( filterName, filterValue )
+
+        _ ->
+            NoOp
+
+
+applySerializer : Model -> QuerySerializer -> Builder -> Builder
+applySerializer model ( queryName, getter ) builder =
+    Builder.insertQuery queryName (getter model) builder
+
+
+querySerializers : List QuerySerializer
+querySerializers =
+    [ ( "q", .searchQuery )
+    , ( "filterBy", .assetFilter >> serializeAssetFilter )
+    ]
+
+
+serializeAssetFilter : Maybe AssetFilter -> String
+serializeAssetFilter assetFilter =
+    case assetFilter of
+        Nothing ->
+            ""
+
+        Just ( filterName, filterValue ) ->
+            filterName ++ ":" ++ filterValue
